@@ -1,3 +1,4 @@
+import { RangeSelection } from '../../../dtale/DataViewerState';
 import { ActionType, AppActionTypes } from '../../actions/AppActions';
 import {
   BASE_INSTANCE_SETTINGS,
@@ -336,14 +337,14 @@ export function sidePanel(state: SidePanelProps = initialVisibility, action: App
  * @return the updated dataViewerUpdate.
  */
 export function dataViewerUpdate(
-  state: DataViewerUpdate | null = null,
+  state: DataViewerUpdate | undefined = undefined,
   action: AppActionTypes,
-): DataViewerUpdate | null {
+): DataViewerUpdate | undefined {
   switch (action.type) {
     case ActionType.DATA_VIEWER_UPDATE:
       return action.update;
     case ActionType.CLEAR_DATA_VIEWER_UPDATE:
-      return null;
+      return undefined;
     default:
       return state;
   }
@@ -382,3 +383,88 @@ export function dragResize(state: number | null = null, action: AppActionTypes):
       return state;
   }
 }
+
+export const rowRange = (
+  state: RangeSelection<number> | undefined = undefined,
+  action: AppActionTypes,
+): RangeSelection<number> | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.rowRange;
+    default:
+      return state;
+  }
+};
+
+export const columnRange = (
+  state: RangeSelection<number> | undefined = undefined,
+  action: AppActionTypes,
+): RangeSelection<number> | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.columnRange;
+    default:
+      return state;
+  }
+};
+
+export const rangeSelect = (
+  state: RangeSelection<string> | undefined = undefined,
+  action: AppActionTypes,
+): RangeSelection<string> | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.rangeSelect;
+    default:
+      return state;
+  }
+};
+
+export const ctrlRows = (state: number[] | undefined = undefined, action: AppActionTypes): number[] | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.ctrlRows;
+    default:
+      return state;
+  }
+};
+
+export const ctrlCols = (state: number[] | undefined = undefined, action: AppActionTypes): number[] | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.ctrlCols;
+    default:
+      return state;
+  }
+};
+
+export const selectedRow = (state: number | undefined = undefined, action: AppActionTypes): number | undefined => {
+  switch (action.type) {
+    case ActionType.SET_RANGE_STATE:
+      return action.selectedRow;
+    default:
+      return state;
+  }
+};
+
+export const formattingOpen = (state: string | undefined = undefined, action: AppActionTypes): string | undefined => {
+  switch (action.type) {
+    case ActionType.OPEN_FORMATTING:
+      return action.selectedCol;
+    case ActionType.CLOSE_FORMATTING:
+      return undefined;
+    default:
+      return state;
+  }
+};
+
+export const menuOpen = (state = false, action: AppActionTypes): boolean => {
+  switch (action.type) {
+    case ActionType.OPEN_MENU:
+      return true;
+    case ActionType.CLOSE_MENU:
+      return false;
+    default:
+      return state;
+  }
+};

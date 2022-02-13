@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 
 import mockPopsicle from '../../MockPopsicle';
@@ -9,10 +8,10 @@ describe('WordcloudBody tests', () => {
   let WordcloudBody;
   beforeAll(() => {
     mockPopsicle((url) => {
-      if (_.startsWith(url, 'chart-data-error-test1')) {
+      if (url.startsWith('chart-data-error-test1')) {
         return { data: {} };
       }
-      if (_.startsWith(url, 'chart-data-error-test2')) {
+      if (url.startsWith('chart-data-error-test2')) {
         return { error: 'Error test.' };
       }
       return undefined;

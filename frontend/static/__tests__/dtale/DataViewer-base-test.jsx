@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 import MultiGrid from 'react-virtualized/dist/commonjs/MultiGrid';
@@ -10,7 +9,7 @@ import reduxUtils from '../redux-test-utils';
 
 import { buildInnerHTML, clickMainMenuButton, mockChartJS, PREDEFINED_FILTERS, tick, tickUpdate } from '../test-utils';
 
-const COL_PROPS = _.map(reduxUtils.DATA.columns, (c, i) => {
+const COL_PROPS = reduxUtils.DATA.columns.map((c, i) => {
   const width = i == 0 ? 70 : 20;
   return {
     ...c,
@@ -71,16 +70,14 @@ describe('DataViewer tests', () => {
         .find(DataViewerMenu)
         .find('ul li span.font-weight-bold')
         .map((s) => s.text()),
-    ).toEqual(
-      _.concat(
-        ['Convert To XArray', 'Describe', 'Custom Filter', 'Predefined Filters', 'show_hide', 'Dataframe Functions'],
-        ['Clean Column', 'Merge & Stack', 'Summarize Data', 'Time Series Analysis', 'Duplicates', 'Missing Analysis'],
-        ['Feature Analysis', 'Correlations', 'Predictive Power Score', 'Charts', 'Network Viewer', 'Heat Map'],
-        ['Highlight Dtypes', 'Highlight Missing', 'Highlight Outliers', 'Highlight Range', 'Low Variance Flag'],
-        ['gage_rnr', 'Instances 1', 'Code Export', 'Export', 'Load Data', 'Refresh Widths', 'About', 'Theme'],
-        ['Reload Data', 'Pin menu', 'Language', 'Shutdown'],
-      ),
-    );
+    ).toEqual([
+      ...['Convert To XArray', 'Describe', 'Custom Filter', 'Predefined Filters', 'show_hide', 'Dataframe Functions'],
+      ...['Clean Column', 'Merge & Stack', 'Summarize Data', 'Time Series Analysis', 'Duplicates', 'Missing Analysis'],
+      ...['Feature Analysis', 'Correlations', 'Predictive Power Score', 'Charts', 'Network Viewer', 'Heat Map'],
+      ...['Highlight Dtypes', 'Highlight Missing', 'Highlight Outliers', 'Highlight Range', 'Low Variance Flag'],
+      ...['gage_rnr', 'Instances 1', 'Code Export', 'Export', 'Load Data', 'Refresh Widths', 'About', 'Theme'],
+      ...['Reload Data', 'Pin menu', 'Language', 'Shutdown'],
+    ]);
     await tick();
     await clickMainMenuButton(result, 'Refresh Widths');
     await clickMainMenuButton(result, 'Shutdown');

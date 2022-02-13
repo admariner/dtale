@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import vis from 'vis-network/dist/vis-network';
 
 import * as networkUtils from '../../network/networkUtils';
@@ -18,7 +17,6 @@ describe('NetworkDisplay test', () => {
     };
     expect(allNodes[node3].color).toBeUndefined();
     let output = networkUtils.neighborhoodHighlight({ allNodes, highlightActive: false }, network, { nodes: [node1] });
-    expect(_.has(allNodes[node1], 'color')).toBe(true);
     expect(allNodes[node3].color).toBe('rgba(150,150,150,0.75)');
 
     expect(output).toBe(true);

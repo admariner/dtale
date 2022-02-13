@@ -4,8 +4,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { Provider } from 'react-redux';
 
-import { DataViewer, ReactDataViewer } from '../../dtale/DataViewer';
-import * as fetcher from '../../fetcher';
+import { DataViewer } from '../../dtale/DataViewer';
 import Confirmation from '../../popups/Confirmation';
 import CreateColumn from '../../popups/create/CreateColumn';
 import { CreateColumnType, SaveAs } from '../../popups/create/CreateColumnState';
@@ -27,7 +26,6 @@ import {
 
 describe('Column operations in an iframe', () => {
   let result: ReactWrapper;
-  let postSpy: jest.SpyInstance;
   const dimensions = new DimensionsHelper({
     offsetWidth: 500,
     offsetHeight: 500,
@@ -38,8 +36,8 @@ describe('Column operations in an iframe', () => {
   beforeEach(async () => {
     const axiosGetSpy = jest.spyOn(axios, 'get');
     axiosGetSpy.mockImplementation((url: string) => Promise.resolve({ data: reduxUtils.urlFetcher(url) }));
-    postSpy = jest.spyOn(fetcher, 'fetchPost');
-    postSpy.mockImplementation((_url, _params, callback) => callback());
+    const axiosPostSpy = jest.spyOn(axios, 'post');
+    axiosPostSpy.mockResolvedValue(Promise.resolve({ data: undefined }));
     const store = reduxUtils.createDtaleStore();
     buildInnerHTML({ settings: '', iframe: 'True' }, store);
     result = mount(
@@ -88,10 +86,10 @@ describe('Column operations in an iframe', () => {
     result = await openColMenu(result, 1);
     result = await clickColMenuButton(result, 'Heat Map');
     validateHeaders(result, ['col1', 'col2', 'col3', 'col4']);
-    expect(result.find(ReactDataViewer).instance().state.backgroundMode).toBe('heatmap-col-col2');
+    expect(result.find(DataViewer).instance().state.backgroundMode).toBe('heatmap-col-col2');
     result = await openColMenu(result, 1);
     result = await clickColMenuButton(result, 'Heat Map');
-    expect(result.find(ReactDataViewer).instance().state.backgroundMode).toBeUndefined();
+    expect(result.find(DataViewer).instance().state.backgroundMode).toBeUndefined();
     result = await openColMenu(result, 3);
     expect(findColMenuButton(result, 'Heat Map')).toHaveLength(0);
   });

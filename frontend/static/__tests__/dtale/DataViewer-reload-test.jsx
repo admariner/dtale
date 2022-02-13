@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -54,23 +53,29 @@ describe('DataViewer tests', () => {
   it('DataViewer: base operations (column selection, locking, sorting, moving to front, col-analysis,...', async () => {
     dataViewer().getData(dataViewer().state.ids, true);
     dataViewer().getData(dataViewer().state.ids, true);
-    expect(_.pick(dataViewer().state, ['loading', 'loadQueue'])).toEqual({
-      loading: true,
-      loadQueue: [[0, 55]],
-    });
+    expect(dataViewer().state).toEqual(
+      expect.objectContaining({
+        loading: true,
+        loadQueue: [[0, 55]],
+      }),
+    );
     dataViewer().getData(dataViewer().state.ids, true);
-    expect(_.pick(dataViewer().state, ['loading', 'loadQueue'])).toEqual({
-      loading: true,
-      loadQueue: [
-        [0, 55],
-        [0, 55],
-      ],
-    });
+    expect(dataViewer().state).toEqual(
+      expect.objectContaining({
+        loading: true,
+        loadQueue: [
+          [0, 55],
+          [0, 55],
+        ],
+      }),
+    );
     await tickUpdate(result);
-    expect(_.pick(dataViewer().state, ['loading', 'loadQueue'])).toEqual({
-      loading: false,
-      loadQueue: [],
-    });
+    expect(dataViewer().state).toEqual(
+      expect.objectContaining({
+        loading: false,
+        loadQueue: [],
+      }),
+    );
     dataViewer().getData(dataViewer().state.ids);
     dataViewer().getData([0, 1, 2, 3]);
     result.find(ReactDataViewer).setState({ ids: [100, 101], loadQueue: [], loading: false });

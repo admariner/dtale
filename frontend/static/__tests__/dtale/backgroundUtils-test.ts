@@ -1,33 +1,30 @@
 import * as React from 'react';
 
 import * as bu from '../../dtale/backgroundUtils';
-import { ColumnDef, DataRecord, DataViewerState } from '../../dtale/DataViewerState';
-import { buildState } from '../../dtale/gridUtils';
+import { ColumnDef, DataRecord } from '../../dtale/DataViewerState';
 import { ThemeType } from '../../redux/state/AppState';
 import { mockColumnDef } from '../mocks/MockColumnDef';
 
 describe('backgroundUtils tests', () => {
   let rec: DataRecord;
   let colCfg: ColumnDef;
-  let state: DataViewerState;
+  let state: any;
 
   beforeEach(() => {
     rec = { view: '' };
     colCfg = mockColumnDef({ name: 'foo', dtype: 'float64' });
     state = {
-      ...buildState({
-        settings: { allow_cell_edits: true, precision: 2, verticalHeaders: false, predefinedFilters: {} },
-        dataId: '1',
-        iframe: false,
-        closeColumnMenu: jest.fn(),
-        openChart: jest.fn(),
-        theme: ThemeType.LIGHT,
-        updateFilteredRanges: jest.fn(),
-        menuPinned: false,
-        ribbonMenuOpen: false,
-        clearDataViewerUpdate: jest.fn(),
-        verticalHeaders: false,
-      }),
+      settings: { allow_cell_edits: true, precision: 2, verticalHeaders: false, predefinedFilters: {} },
+      dataId: '1',
+      iframe: false,
+      closeColumnMenu: jest.fn(),
+      openChart: jest.fn(),
+      theme: ThemeType.LIGHT,
+      updateFilteredRanges: jest.fn(),
+      menuPinned: false,
+      ribbonMenuOpen: false,
+      clearDataViewerUpdate: jest.fn(),
+      verticalHeaders: false,
       backgroundMode: 'heatmap-col',
     };
   });
@@ -36,7 +33,7 @@ describe('backgroundUtils tests', () => {
     expect(bu.updateBackgroundStyles(state, colCfg, rec)).toEqual({});
     colCfg = { ...colCfg, min: 5, max: 10 };
     rec = { view: '7', raw: 7 };
-    const output: React.CSSProperties = bu.updateBackgroundStyles(state, colCfg, rec);
+    const output: React.CSSProperties = bu.updateBackgroundStyles(colCfg, rec);
     expect(output.background).toBe('#ffcc00');
   });
 

@@ -5,8 +5,8 @@ import { act } from 'react-dom/test-utils';
 import { Provider } from 'react-redux';
 import { Store } from 'redux';
 
-import { DataViewer, ReactDataViewer } from '../../dtale/DataViewer';
-import { ColumnDef, DataViewerProps, DataViewerState } from '../../dtale/DataViewerState';
+import { DataViewer } from '../../dtale/DataViewer';
+import { ColumnDef } from '../../dtale/DataViewerState';
 import DataViewerMenu from '../../dtale/menu/DataViewerMenu';
 import HeatMapOption from '../../dtale/menu/HeatMapOption';
 import RangeHighlightOption from '../../dtale/menu/RangeHighlightOption';
@@ -55,7 +55,7 @@ describe('DataViewer highlighting tests', () => {
   });
 
   const heatMapBtn = (): ReactWrapper => findMainMenuButton(result, 'By Col', 'div.btn-group');
-  const dataViewer = (): ReactWrapper<DataViewerProps, DataViewerState> => result.find(ReactDataViewer);
+  const dataViewer = (): ReactWrapper => result.find(DataViewer);
   const allRange = (): ReactWrapper => result.find(RangeHighlight).find('div.form-group').last();
 
   it('DataViewer: heatmap', async () => {

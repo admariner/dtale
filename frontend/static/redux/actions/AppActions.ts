@@ -1,6 +1,7 @@
 import { Action, AnyAction } from 'redux';
 import { ThunkAction } from 'redux-thunk';
 
+import { RangeSelection } from '../../dtale/DataViewerState';
 import {
   AppState,
   DataViewerUpdate,
@@ -19,6 +20,10 @@ export enum ActionType {
   LOAD_PREVIEW = 'load-preview',
   EDIT_CELL = 'edit-cell',
   TOGGLE_COLUMN_MENU = 'toggle-column-menu',
+  OPEN_MENU = 'open-menu',
+  CLOSE_MENU = 'close-menu',
+  OPEN_FORMATTING = 'open-formatting',
+  CLOSE_FORMATTING = 'close-formatting',
   TOGGLE_MENU_PINNED = 'toggle-menu-pinned',
   HIDE_COLUMN_MENU = 'hide-column-menu',
   CLEAR_EDIT = 'clear-edit',
@@ -50,6 +55,17 @@ export enum ActionType {
   CLEAR_MAX_HEIGHT = 'clear-max-height',
   SET_QUERY_ENGINE = 'set-query-engine',
   UPDATE_SHOW_ALL_HEATMAP_COLUMNS = 'update-show-all-heatmap-columns',
+  SET_RANGE_STATE = 'set-range-state',
+}
+
+/** Action fired when a range is selected */
+export interface SetRangeStateAction extends Action<typeof ActionType.SET_RANGE_STATE> {
+  rowRange?: RangeSelection<number>;
+  columnRange?: RangeSelection<number>;
+  rangeSelect?: RangeSelection<string>;
+  ctrlRows?: number[];
+  ctrlCols?: number[];
+  selectedRow?: number;
 }
 
 /** Action fired when application initially loads */
@@ -115,6 +131,17 @@ export interface ToggleColumnAction extends Action<typeof ActionType.TOGGLE_COLU
   headerRef?: HTMLDivElement;
 }
 
+/** Action fired for toggling the display of the main menu */
+export type ToggleMenuAction = Action<typeof ActionType.OPEN_MENU | ActionType.CLOSE_MENU>;
+
+/** Action fired for opening the formatting menu */
+export interface OpenFormattingAction extends Action<typeof ActionType.OPEN_FORMATTING> {
+  selectedCol: string;
+}
+
+/** Action fired for closing the formatting menu */
+export type CloseFormattingAction = Action<typeof ActionType.CLOSE_FORMATTING>;
+
 /** Action fired when updating xarray dimensions */
 export interface UpdateXarrayDimAction extends Action<typeof ActionType.UPDATE_XARRAY_DIM> {
   xarrayDim: Record<string, boolean>;
@@ -127,12 +154,12 @@ export interface UpdateFilteredRangesAction extends Action<typeof ActionType.UPD
 
 /** Action fired when updating instance settings */
 export interface UpdateSettingsAction extends Action<typeof ActionType.UPDATE_SETTINGS> {
-  settings: InstanceSettings;
+  settings: Partial<InstanceSettings>;
 }
 
 /** Action fired when showing a main menu tooltip */
 export interface ShowMenuTooltipAction extends Action<typeof ActionType.SHOW_MENU_TOOLTIP> {
-  element: HTMLLIElement;
+  element: HTMLElement;
   content: React.ReactNode;
 }
 
@@ -215,6 +242,9 @@ export type AppActionTypes =
   | EditedCellAction
   | EditedTextAreaHeightAction
   | ToggleColumnAction
+  | ToggleMenuAction
+  | OpenFormattingAction
+  | CloseFormattingAction
   | UpdateXarrayDimAction
   | UpdateFilteredRangesAction
   | UpdateSettingsAction
@@ -229,7 +259,8 @@ export type AppActionTypes =
   | UpdateMaxRowHeightAction
   | SetQueryEngineAction
   | UpdateShowAllHeatmapColumnsAction
-  | OpenChartAction;
+  | OpenChartAction
+  | SetRangeStateAction;
 
 /** Type definition for redux application actions */
 export type AppActions<R> = ThunkAction<R, AppState, Record<string, unknown>, AnyAction>;

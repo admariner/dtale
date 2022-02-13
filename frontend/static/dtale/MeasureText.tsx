@@ -1,7 +1,7 @@
-import React from 'react';
+import * as React from 'react';
 
-export function measureText(str) {
-  const o = document.getElementById('text-measure');
+export const measureText = (str: string): number => {
+  const o = document.getElementById('text-measure') as HTMLSpanElement;
   o.textContent = str;
   const styles = {
     'font-family': `"Istok", "Helvetica", Arial, sans-serif`,
@@ -13,18 +13,9 @@ export function measureText(str) {
     visibility: 'hidden',
   };
   for (const [key, value] of Object.entries(styles)) {
-    o.style[key] = value;
+    (o.style as any)[key] = value;
   }
   return Math.round(o.getBoundingClientRect().width) + 20; // 5px padding on each side
-}
+};
 
-export class MeasureText extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return <span id="text-measure" />;
-  }
-}
-MeasureText.displayName = 'MeasureText';
+export const MeasureText: React.FC = () => <span id="text-measure" />;

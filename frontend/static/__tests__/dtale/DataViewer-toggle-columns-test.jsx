@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -56,6 +55,6 @@ describe('DataViewer tests', () => {
       update: { type: 'toggle-columns', columns: { col1: false } },
     });
     result.update();
-    expect(_.find(dataViewer().state.columns, { name: 'col1' }).visible).toBe(false);
+    expect(dataViewer().state.columns.find((c) => c.name === 'col1').visible).toBe(false);
   });
 });

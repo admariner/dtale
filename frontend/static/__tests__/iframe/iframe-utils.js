@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { act } from 'react-dom/test-utils';
 import { expect } from '@jest/globals';
 
@@ -8,7 +7,7 @@ function findColMenuButton(result, name, btnTag = 'button') {
   return result
     .find(ColumnMenu)
     .find(`ul li ${btnTag}`)
-    .findWhere((b) => _.includes(b.text(), name));
+    .findWhere((b) => b.text().includes(name));
 }
 
 async function clickColMenuButton(result, name, btnTag = 'button') {
@@ -25,7 +24,7 @@ async function clickColMenuSubButton(result, label, row = 0) {
       .find('ul li div.column-sorting')
       .at(row)
       .find('button')
-      .findWhere((b) => _.includes(b.html(), label))
+      .findWhere((b) => b.html().includes(label))
       .first()
       .simulate('click');
   });

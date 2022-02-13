@@ -1,10 +1,10 @@
-import _ from 'lodash';
+import { ScatterDataPoint } from 'chart.js';
 
 import { basePointFormatter, formatScatterPoints, getScatterMax, getScatterMin } from '../scatterChartUtils';
 
 describe('scatterChartUtils tests', () => {
   it('scatterChartUtils: testing filtering/highlighting logic', () => {
-    const data = [
+    const data: Array<Record<string, number>> = [
       { col: 1.4, col2: 1.5, index: 0 },
       { col: 2.4, col2: 1.5, index: 1 },
       { col: 3.4, col2: 2.1, index: 2 },
@@ -17,10 +17,10 @@ describe('scatterChartUtils tests', () => {
       { col: 4.2, col2: 3.0, index: 9 },
     ];
     const scatterData = formatScatterPoints(
-      data,
+      data.map((d) => d as any as ScatterDataPoint),
       basePointFormatter('col', 'col2'),
-      _.matches({ index: 0 }),
-      _.matches({ index: 9 }),
+      (p: ScatterDataPoint) => (p as any).index === 0,
+      (p: ScatterDataPoint) => (p as any).index === 9,
     );
     expect(scatterData.pointRadius).toEqual([3, 3, 3, 3, 3, 3, 3, 3, 0, 5]);
     expect(getScatterMin(data, 'col')).toBe(-2.5);

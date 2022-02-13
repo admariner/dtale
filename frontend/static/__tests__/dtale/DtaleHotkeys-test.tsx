@@ -1,38 +1,46 @@
-import { mount } from 'enzyme';
-import _ from 'lodash';
-import React from 'react';
+import axios from 'axios';
+import { mount, ReactWrapper } from 'enzyme';
+import * as React from 'react';
 import { GlobalHotKeys } from 'react-hotkeys';
 import { Provider } from 'react-redux';
+import { Store } from 'redux';
 
-import { DtaleHotkeys, ReactDtaleHotkeys } from '../../dtale/DtaleHotkeys';
+import { DtaleHotkeys } from '../../dtale/DtaleHotkeys';
 import * as menuUtils from '../../menuUtils';
+import { mockColumnDef } from '../mocks/MockColumnDef';
 import reduxUtils from '../redux-test-utils';
 import { buildInnerHTML } from '../test-utils';
-import * as fetcher from '../../fetcher';
-import { mockColumnDef } from '../mocks/MockColumnDef';
 
 describe('DtaleHotkeys tests', () => {
   const { open, innerWidth, innerHeight } = window;
   const text = 'COPIED_TEXT';
-  let result, propagateState, openChart, buildClickHandlerSpy, postSpy;
+  let result: ReactWrapper;
+  let buildClickHandlerSpy: jest.SpyInstance;
+  let axiosPostSpy: jest.SpyInstance;
+  let store: Store;
+  const openSpy = jest.fn();
 
   beforeAll(() => {
-    propagateState = jest.fn();
-    openChart = jest.fn();
-    delete window.open;
-    window.open = jest.fn();
+    delete (window as any).open;
+    window.open = openSpy;
     window.innerHeight = 800;
     window.innerWidth = 1400;
   });
 
   beforeEach(() => {
     buildClickHandlerSpy = jest.spyOn(menuUtils, 'buildClickHandler');
-    postSpy = jest.spyOn(fetcher, 'fetchPost');
-    postSpy.mockImplementation((_url, _params, callback) => callback(text));
-    buildInnerHTML({ settings: '' });
-    result = mount(<ReactDtaleHotkeys {...{ propagateState, dataId: '1', openChart }} />, {
-      attachTo: document.getElementById('content'),
-    });
+    const axiosGetSpy = jest.spyOn(axios, 'get');
+    axiosGetSpy.mockImplementation((url: string) => Promise.resolve({ data: reduxUtils.urlFetcher(url) }));
+    axiosPostSpy = jest.spyOn(axios, 'post');
+    axiosPostSpy.mockResolvedValue(Promise.resolve({ data: undefined }));
+    store = reduxUtils.createDtaleStore();
+    buildInnerHTML({ settings: '' }, store);
+    result = mount(
+      <Provider store={store}>
+        <DtaleHotkeys columns={[]} />
+      </Provider>,
+      { attachTo: document.getElementById('content') ?? undefined },
+    );
   });
 
   afterEach(() => {
@@ -59,54 +67,43 @@ describe('DtaleHotkeys tests', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const menuHandler = hotkeys.prop('handlers').MENU;
     menuHandler();
-    expect(propagateState.mock.calls).toHaveLength(1);
-    expect(propagateState.mock.calls[0][0]).toEqual({ menuOpen: true });
+    expect(store.getState().menuOpen).toBe(true);
     expect(buildClickHandlerSpy.mock.calls).toHaveLength(1);
     buildClickHandlerSpy.mock.calls[0][0]();
-    expect(propagateState.mock.calls).toHaveLength(2);
-    expect(propagateState.mock.calls[1][0]).toEqual({ menuOpen: false });
+    expect(store.getState().menuOpen).toBe(false);
   });
 
   it('opens new tab on describe open', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const describeHandler = hotkeys.prop('handlers').DESCRIBE;
     describeHandler();
-    expect(window.open.mock.calls).toHaveLength(1);
-    expect(window.open.mock.calls[0][0]).toBe('/dtale/popup/describe/1');
+    expect(openSpy).toHaveBeenLastCalledWith('/dtale/popup/describe/1');
   });
 
   it('calls window.open on code export', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const codeHandler = hotkeys.prop('handlers').CODE;
     codeHandler();
-    expect(window.open.mock.calls).toHaveLength(1);
-    expect(window.open.mock.calls[0][0]).toBe('/dtale/popup/code-export/1');
+    expect(openSpy).toHaveBeenLastCalledWith('/dtale/popup/code-export/1');
   });
 
-  it('calls window.open on code export', () => {
+  it('calls window.open on chart display', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const chartsHandler = hotkeys.prop('handlers').CHARTS;
     chartsHandler();
-    expect(window.open.mock.calls).toHaveLength(1);
-    expect(window.open.mock.calls[0][0]).toBe('/dtale/charts/1');
+    expect(openSpy).toHaveBeenLastCalledWith('/dtale/charts/1');
   });
 
   it('calls openChart from redux', () => {
-    const store = reduxUtils.createDtaleStore();
-    buildInnerHTML({ settings: '' }, store);
-    const reduxResult = mount(
-      <Provider store={store}>
-        <DtaleHotkeys propagateState={propagateState} />
-      </Provider>,
-      { attachTo: document.getElementById('content') },
-    );
-    const hotkeys = reduxResult.find(GlobalHotKeys);
+    const hotkeys = result.find(GlobalHotKeys);
     const filterHandler = hotkeys.prop('handlers').FILTER;
     filterHandler();
-    expect(_.pick(store.getState().chartData, ['type', 'visible'])).toEqual({
-      type: 'filter',
-      visible: true,
-    });
+    expect(store.getState().chartData).toEqual(
+      expect.objectContaining({
+        type: 'filter',
+        visible: true,
+      }),
+    );
   });
 
   it('calls openChart for copy handler when ctrlCols exists', () => {
@@ -117,8 +114,8 @@ describe('DtaleHotkeys tests', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const copyHandler = hotkeys.prop('handlers').COPY;
     copyHandler();
-    expect(postSpy).toBeCalledWith('/dtale/build-column-copy/1', { columns: `["foo"]` }, expect.any(Function));
-    expect(openChart).toBeCalledWith(
+    expect(axiosPostSpy).toBeCalledWith('/dtale/build-column-copy/1', { columns: `["foo"]` }, expect.any(Function));
+    expect(store.getState().chartData).toEqual(
       expect.objectContaining({
         text,
         headers: ['foo'],
@@ -136,12 +133,12 @@ describe('DtaleHotkeys tests', () => {
     const hotkeys = result.find(GlobalHotKeys);
     const copyHandler = hotkeys.prop('handlers').COPY;
     copyHandler();
-    expect(postSpy).toBeCalledWith(
+    expect(axiosPostSpy).toBeCalledWith(
       '/dtale/build-row-copy/1',
       { rows: '[0]', columns: `["foo"]` },
       expect.any(Function),
     );
-    expect(openChart).toBeCalledWith(
+    expect(store.getState().chartData).toEqual(
       expect.objectContaining({
         text,
         headers: ['foo'],

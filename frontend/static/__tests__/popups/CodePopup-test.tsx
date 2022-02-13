@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 
 import * as CopyToClipboard from '../../CopyToClipboard';
@@ -12,7 +11,7 @@ describe('CodePopup tests', () => {
     Object.defineProperty(global.document, 'queryCommandSupported', {
       value: () => true,
     });
-    Object.defineProperty(global.document, 'execCommand', { value: _.noop });
+    Object.defineProperty(global.document, 'execCommand', { value: () => ({}) });
   });
 
   afterEach(jest.resetAllMocks);

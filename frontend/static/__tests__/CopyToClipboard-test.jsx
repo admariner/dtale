@@ -1,5 +1,4 @@
 import { mount } from 'enzyme';
-import _ from 'lodash';
 import React from 'react';
 
 import CopyToClipboard from '../CopyToClipboard';
@@ -29,7 +28,7 @@ describe('CopyToClipboard tests', () => {
     Object.defineProperty(global.document, 'queryCommandSupported', {
       value: () => true,
     });
-    Object.defineProperty(global.document, 'execCommand', { value: _.noop });
+    Object.defineProperty(global.document, 'execCommand', { value: () => ({}) });
     const result = render();
     expect(result.find('#clicker').length).toBe(1);
     result.find('#clicker').simulate('click');
