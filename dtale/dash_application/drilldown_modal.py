@@ -179,7 +179,7 @@ def init_callbacks(dash_app):
         data_id = inputs["data_id"]
         chart_type = all_inputs.get("chart_type")
         click_data = click_data or current_click_data
-        click_point = next((p for p in click_data.get("points", [])), None)
+        click_point = next(iter(click_data.get("points", [])), None)
         if chart_type == "maps":
             props = [["location", "loc"], "lat", "lon"]
             val = ["z", "map_val"]
@@ -219,14 +219,13 @@ def init_callbacks(dash_app):
         if drilldown_x is None and chart_type != "maps":
             raise PreventUpdate
         if click_data:
-            click_point = next((p for p in click_data.get("points", [])), None)
-            if click_point:
+            if click_point := next(iter(click_data.get("points", [])), None):
                 curr_settings = global_state.get_settings(data_id) or {}
                 query = build_query(
                     data_id, all_inputs.get("query") or curr_settings.get("query")
                 )
                 x_col = all_inputs.get("x")
-                y_col = next((y2 for y2 in make_list(all_inputs.get("y"))), None)
+                y_col = next(iter(make_list(all_inputs.get("y"))), None)
                 if chart_type in ZAXIS_CHARTS:
                     x, y, z, frame = (
                         click_point.get(p) for p in ["x", "y", "z", "customdata"]
@@ -243,9 +242,7 @@ def init_callbacks(dash_app):
                     if frame_col:
                         point_filter[frame_col] = frame
                     if drilldown_type == "histogram":
-                        z_col = next(
-                            (z2 for z2 in make_list(all_inputs.get("z"))), None
-                        )
+                        z_col = next(iter(make_list(all_inputs.get("z"))), None)
                         hist_chart = build_histogram(
                             data_id, z_col, query, point_filter
                         )
@@ -255,10 +252,7 @@ def init_callbacks(dash_app):
                             global_state.get_data(data_id),
                             [point_filter],
                         )
-                        if not query:
-                            query = xy_query
-                        else:
-                            query = "({}) and ({})".format(query, xy_query)
+                        query = xy_query if not query else "({}) and ({})".format(query, xy_query)
                         all_inputs["query"] = query
                         all_inputs["chart_type"] = drilldown_type
                         all_inputs["agg"] = "raw"
@@ -290,10 +284,7 @@ def init_callbacks(dash_app):
                             global_state.get_data(data_id),
                             [point_filter],
                         )
-                        if not query:
-                            query = map_query
-                        else:
-                            query = "({}) and ({})".format(query, map_query)
+                        query = map_query if not query else "({}) and ({})".format(query, map_query)
                         all_inputs["query"] = query
                         all_inputs["chart_type"] = drilldown_type
                         all_inputs["agg"] = "raw"
@@ -305,9 +296,7 @@ def init_callbacks(dash_app):
                         if map_type != "choropleth":
                             all_inputs["x"] = "lat_lon"
                             lat, lon = (all_inputs.get(p) for p in ["lat", "lon"])
-                            data.loc[:, "lat_lon"] = (
-                                data[lat].astype(str) + "|" + data[lon].astype(str)
-                            )
+                            data.loc[:, "lat_lon"] = f'{data[lat].astype(str)}|{data[lon].astype(str)}'
                             x_style = dict(display="none")
                         all_inputs["y"] = [map_val]
                         chart, _, _ = build_chart(data=data, **all_inputs)
@@ -327,10 +316,7 @@ def init_callbacks(dash_app):
                             global_state.get_data(data_id),
                             [point_filter],
                         )
-                        if not query:
-                            query = x_query
-                        else:
-                            query = "({}) and ({})".format(query, x_query)
+                        query = x_query if not query else "({}) and ({})".format(query, x_query)
                         all_inputs["query"] = query
                         all_inputs["chart_type"] = drilldown_type
                         all_inputs["agg"] = "raw"

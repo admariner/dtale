@@ -96,9 +96,11 @@ def treemap_data():
         "Frozen\n volume: 150k",
         "Non-food\n volume: 50k",
     ]
-    dfs = []
-    for g in ["group1", "group2"]:
-        dfs.append(pd.DataFrame(dict(group=g, volume=volume, label=labels)))
+    dfs = [
+        pd.DataFrame(dict(group=g, volume=volume, label=labels))
+        for g in ["group1", "group2"]
+    ]
+
     return pd.concat(dfs, ignore_index=True)
 
 
@@ -213,6 +215,4 @@ def ts_analysis_data():
 
 @pytest.fixture(scope="module")
 def builtin_pkg():
-    if PY3:
-        return "builtins"
-    return "__builtin__"
+    return "builtins" if PY3 else "__builtin__"

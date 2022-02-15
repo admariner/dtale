@@ -94,10 +94,7 @@ class DuplicateColumns(object):
         keep = self.cfg.get("keep") or "none"
         cols_to_remove = []
         for col, dupes in duplicate_cols.items():
-            if keep == "none":
-                cols_to_remove += [col] + dupes
-            else:
-                cols_to_remove += dupes
+            cols_to_remove += [col] + dupes if keep == "none" else dupes
         if not cols_to_remove:
             raise NoDuplicatesException()
         if len(cols_to_remove) == len(df.columns):
@@ -196,13 +193,12 @@ class ShowDuplicates(object):
         duplicates = grid_formatter(
             grid_columns(duplicates), as_string=True
         ).format_lists(duplicates)
-        check_data = {
+        return {
             ", ".join([duplicates[col][i] for col in group]): dict(
                 count=int(ct), filter=[duplicates[col][i] for col in group]
             )
             for i, ct in enumerate(duplicate_counts)
         }
-        return check_data
 
     def remove(self, df):
         group = self.cfg.get("group")
@@ -213,8 +209,9 @@ class ShowDuplicates(object):
         group_filter = None
         if self.cfg.get("filter"):
             group_filter, _ = build_group_inputs_filter(
-                df, [{col: val for col, val in zip(group, self.cfg["filter"])}]
+                df, [dict(zip(group, self.cfg["filter"]))]
             )
+
             duplicates = run_query(duplicates, group_filter)
         code = self._build_code(group_filter)
         return duplicates, code

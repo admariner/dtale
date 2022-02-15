@@ -85,9 +85,7 @@ def loader_options(key, params):
 
     def decorator(f):
         for p in params:
-            f = click.option(
-                "--" + key + "-" + p, help="Override {} {}".format(key, p)
-            )(f)
+            f = click.option(f'--{key}-{p}', help="Override {} {}".format(key, p))(f)
         return f
 
     return decorator
@@ -214,7 +212,7 @@ def run(click_wrapper):
         click_wrapper(args)
         sys.exit(0)
     except Exception as ex:
-        logger.exception("Fatal error: " + str(ex))
+        logger.exception(f'Fatal error: {str(ex)}')
         sys.exit(1)
     finally:
         logger.info("Elapsed time: %s" % (datetime.now() - t1))

@@ -1111,14 +1111,16 @@ def init_callbacks(dash_app):
                 range_data[p].get(yaxis_name) for p in ["min", "max"]
             )
 
-        if yaxis_name in yaxis_data["data"]:
-            if (yaxis_min, yaxis_max) == (range_min, range_max):
-                del yaxis_data["data"][yaxis_name]
-            else:
-                yaxis_data["data"][yaxis_name] = dict(min=yaxis_min, max=yaxis_max)
-        else:
-            if (yaxis_min, yaxis_max) != (range_min, range_max):
-                yaxis_data["data"][yaxis_name] = dict(min=yaxis_min, max=yaxis_max)
+        if yaxis_name in yaxis_data["data"] and (yaxis_min, yaxis_max) == (
+            range_min,
+            range_max,
+        ):
+            del yaxis_data["data"][yaxis_name]
+        elif yaxis_name in yaxis_data["data"] or (yaxis_min, yaxis_max) != (
+            range_min,
+            range_max,
+        ):
+            yaxis_data["data"][yaxis_name] = dict(min=yaxis_min, max=yaxis_max)
         return yaxis_data
 
     @dash_app.callback(

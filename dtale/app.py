@@ -155,8 +155,9 @@ class DtaleFlask(Flask):
 
     def _override_routes(self, rule):
         try:
-            routes_to_remove = [r for r in self.url_map._rules if r.rule == rule]
-            if routes_to_remove:
+            if routes_to_remove := [
+                r for r in self.url_map._rules if r.rule == rule
+            ]:
                 self.url_map._rules = [
                     r
                     for r in self.url_map._rules
@@ -256,7 +257,7 @@ class DtaleFlask(Flask):
                  otherwise SHORT_LIFE_TIMEOUT
 
         """
-        if name and any([str(name).startswith(path) for path in SHORT_LIFE_PATHS]):
+        if name and any(str(name).startswith(path) for path in SHORT_LIFE_PATHS):
             return SHORT_LIFE_TIMEOUT
         return super(DtaleFlask, self).get_send_file_max_age(name)
 
@@ -561,8 +562,7 @@ def build_startup_url_and_app_root(app_root=None):
     global ACTIVE_HOST, ACTIVE_PORT, JUPYTER_SERVER_PROXY, USE_COLAB
 
     if USE_COLAB:
-        colab_host = use_colab(ACTIVE_PORT)
-        if colab_host:
+        if colab_host := use_colab(ACTIVE_PORT):
             return colab_host, None
     url = build_url(ACTIVE_PORT, ACTIVE_HOST)
     final_app_root = app_root
@@ -576,11 +576,10 @@ def build_startup_url_and_app_root(app_root=None):
             else final_app_root
         )
     if final_app_root is not None:
-        if JUPYTER_SERVER_PROXY:
-            final_app_root = fix_url_path("{}/{}".format(final_app_root, ACTIVE_PORT))
-            return final_app_root, final_app_root
-        else:
+        if not JUPYTER_SERVER_PROXY:
             return fix_url_path("{}/{}".format(url, final_app_root)), final_app_root
+        final_app_root = fix_url_path("{}/{}".format(final_app_root, ACTIVE_PORT))
+        return final_app_root, final_app_root
     return url, final_app_root
 
 

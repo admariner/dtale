@@ -476,7 +476,7 @@ def test_update_settings(test_data, unittest):
 def test_update_formats():
     from dtale.views import build_dtypes_state
 
-    settings = dict()
+    settings = {}
     df = pd.DataFrame([dict(a=1, b=2)])
     with app.test_client() as c:
         data = {c.port: df}
@@ -606,16 +606,11 @@ def test_delete_cols():
             "/dtale/delete-col/{}".format(c.port),
             query_string=dict(cols=json.dumps(delete_cols)),
         )
-        assert (
-            len(
-                [
+        assert not [
                     col
                     for col in global_state.get_data(c.port).columns
                     if col in delete_cols
                 ]
-            )
-            == 0
-        )
         assert (
             next(
                 (

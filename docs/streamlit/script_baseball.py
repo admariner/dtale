@@ -41,7 +41,7 @@ def load_content(url):
         try:
             resp = requests.get(url)
         except:
-            tries = tries + 1
+            tries += 1
             logger.debug("failed to load %s, retry %d", url, tries)
     content = resp.text
     return BeautifulSoup(content, features="lxml")
@@ -162,8 +162,7 @@ def load_iframes():
 st.title("Baseball App - Streamlit w/ D-Tale")
 grid, charts = load_iframes()
 player_suggestions = None
-player = st.text_input("Player")
-if player:
+if player := st.text_input("Player"):
     try:
         player_suggestions = load_player_suggestions(player)
     except PlayerPageRedirectException as ex:
@@ -174,8 +173,9 @@ if player:
 if player_suggestions:
     button_cols = st.beta_columns(len(player_suggestions))
     for player, col in zip(player_suggestions, button_cols):
-        player_button = col.button(f'{player["name"]} ({player["years"]} years)')
-        if player_button:
+        if player_button := col.button(
+            f'{player["name"]} ({player["years"]} years)'
+        ):
             player_data = load_player_df(player["href"])
             update_dtale_data(player_data)
             grid, charts = load_iframes()

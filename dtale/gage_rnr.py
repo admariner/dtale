@@ -61,11 +61,7 @@ class Statistics(object):
         self.parts = data.shape[1]
         self.operators = data.shape[0]
         self.measurements = data.shape[2]
-        if labels is None:
-            self.labels = {}
-        else:
-            self.labels = labels
-
+        self.labels = {} if labels is None else labels
         if "Operator" not in self.labels:
             self.labels["Operator"] = [
                 ("Operator %d" % x) for x in range(self.operators)
@@ -101,7 +97,7 @@ class Statistics(object):
         return {Component.TOTAL: std, Component.OPERATOR: stdo, Component.PART: stdp}
 
     def calculate(self):
-        self.result = dict()
+        self.result = {}
         self.result[Result.Mean] = self.calculate_mean()
         self.result[Result.Std] = self.calculate_std()
 
@@ -131,7 +127,7 @@ class GageRnR(Statistics):
 
     def calculate(self):
         """Calculate GageRnR."""
-        self.result = dict()
+        self.result = {}
         self.result[Result.DF] = self.calculate_dof()
         self.result[Result.Mean] = self.calculate_mean()
         self.result[Result.SS] = self.calculate_ss()
@@ -189,10 +185,7 @@ class GageRnR(Statistics):
     def calculate_sum_of_deviations(self):
         """Calculate Sum of Deviations."""
         squares = self.calculate_squares()
-        SD = dict()
-        for key in squares:
-            SD[key] = np.sum(squares[key])
-        return SD
+        return {key: np.sum(squares[key]) for key in squares}
 
     def calculate_ss(self):
         """Calculate Sum of Squares."""
@@ -207,31 +200,27 @@ class GageRnR(Statistics):
 
     def calculate_ms(self, dof, SS):
         """Calculate Mean of Squares."""
-        MS = dict()
-
-        for key in SS:
-            MS[key] = SS[key] / dof[key]
-        return MS
+        return {key: SS[key] / dof[key] for key in SS}
 
     def calculate_var(self, MS):
         """Calculate GageRnR Variances."""
-        Var = dict()
+        Var = {
+            Component.MEASUREMENT: MS[Component.MEASUREMENT],
+            Component.OPERATOR_BY_PART: (
+                (MS[Component.OPERATOR_BY_PART] - MS[Component.MEASUREMENT])
+                / self.parts
+            ),
+            Component.OPERATOR: (
+                MS[Component.OPERATOR] - MS[Component.OPERATOR_BY_PART]
+            )
+            / (self.parts * self.measurements),
+            Component.PART: (MS[Component.PART] - MS[Component.OPERATOR_BY_PART])
+            / (self.operators * self.measurements),
+        }
 
-        Var[Component.MEASUREMENT] = MS[Component.MEASUREMENT]
-        Var[Component.OPERATOR_BY_PART] = (
-            MS[Component.OPERATOR_BY_PART] - MS[Component.MEASUREMENT]
-        ) / self.parts
-        Var[Component.OPERATOR] = (
-            MS[Component.OPERATOR] - MS[Component.OPERATOR_BY_PART]
-        ) / (self.parts * self.measurements)
-        Var[Component.PART] = (MS[Component.PART] - MS[Component.OPERATOR_BY_PART]) / (
-            self.operators * self.measurements
-        )
 
         for key in Var:
-            if Var[key] < 0:
-                Var[key] = 0
-
+            Var[key] = max(Var[key], 0)
         Var[Component.TOTAL] = (
             Var[Component.OPERATOR]
             + Var[Component.PART]
@@ -249,35 +238,29 @@ class GageRnR(Statistics):
 
     def calculate_std(self, Var):
         """Calculate GageRnR Standard Deviations."""
-        Std = dict()
-        for key in Var:
-            Std[key] = math.sqrt(Var[key])
-
-        return Std
+        return {key: math.sqrt(Var[key]) for key in Var}
 
     def calculate_f(self, MS):
         """Calculate F-Values."""
-        F = dict()
-
-        F[Component.OPERATOR] = MS[Component.OPERATOR] / MS[Component.OPERATOR_BY_PART]
-
-        F[Component.PART] = MS[Component.PART] / MS[Component.OPERATOR_BY_PART]
-
-        F[Component.OPERATOR_BY_PART] = (
-            MS[Component.OPERATOR_BY_PART] / MS[Component.MEASUREMENT]
-        )
-
-        return F
+        return {
+            Component.OPERATOR: MS[Component.OPERATOR]
+            / MS[Component.OPERATOR_BY_PART],
+            Component.PART: MS[Component.PART] / MS[Component.OPERATOR_BY_PART],
+            Component.OPERATOR_BY_PART: (
+                MS[Component.OPERATOR_BY_PART] / MS[Component.MEASUREMENT]
+            ),
+        }
 
     def calculate_p(self, dof, F):
         """Calculate P-Values."""
-        P = dict()
+        P = {
+            Component.OPERATOR: stats.f.sf(
+                F[Component.OPERATOR],
+                dof[Component.OPERATOR],
+                dof[Component.OPERATOR_BY_PART],
+            )
+        }
 
-        P[Component.OPERATOR] = stats.f.sf(
-            F[Component.OPERATOR],
-            dof[Component.OPERATOR],
-            dof[Component.OPERATOR_BY_PART],
-        )
 
         P[Component.PART] = stats.f.sf(
             F[Component.PART], dof[Component.PART], dof[Component.OPERATOR_BY_PART]

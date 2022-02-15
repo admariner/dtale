@@ -90,9 +90,7 @@ class DtaleInstance(object):
 
     @property
     def is_xarray_dataset(self):
-        if self._dataset is not None:
-            return True
-        return False
+        return self._dataset is not None
 
     @data.setter
     def data(self, data):
@@ -133,8 +131,8 @@ class DtaleInstance(object):
 
 class DefaultStore(object):
     def __init__(self):
-        self._data_store = dict()
-        self._data_names = dict()
+        self._data_store = {}
+        self._data_names = {}
 
     # Use int for data_id for easier sorting
     def build_data_id(self):
@@ -158,9 +156,7 @@ class DefaultStore(object):
         return self._data_store.items()
 
     def contains(self, key):
-        if key is None:
-            return False
-        return int(key) in self._data_store
+        return False if key is None else int(key) in self._data_store
 
     # this should be a property but somehow it stays 0 no matter what.
     def size(self):
@@ -308,12 +304,9 @@ for fn_name in fn_list:
 
 # for tests. default_store is always initialized.
 def use_default_store():
-    new_store = dict()
-    for k, v in _as_dict(_default_store.store).items():
-        new_store[int(k)] = v
+    new_store = {int(k): v for k, v in _as_dict(_default_store.store).items()}
     _default_store.store.clear()
     _default_store.store = new_store
-    pass
 
 
 def drop_punctuation(val):
@@ -576,7 +569,7 @@ def use_redis_store(directory, *args, **kwargs):
             return len(self.keys())
 
     def create_redis(name):
-        file_path = join(directory, name + ".db")
+        file_path = join(directory, f'{name}.db')
         return DtaleRedis(file_path, *args, **kwargs)
 
     use_store(DtaleRedis, create_redis)

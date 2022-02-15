@@ -289,9 +289,10 @@ def test_encoder():
     verify_builder(
         builder,
         lambda col: all(
-            [col[c].isnull().sum() == 0 for c in ["car_Ford", "car_Honda"]]
+            col[c].isnull().sum() == 0 for c in ["car_Ford", "car_Honda"]
         ),
     )
+
 
     cfg = {"col": "car", "algo": "ordinal"}
     builder = ColumnBuilder(data_id, column_type, "Col1", cfg)

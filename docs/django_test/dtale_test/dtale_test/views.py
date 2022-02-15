@@ -19,5 +19,4 @@ def create_df(request):
     df = pd.DataFrame(dict(a=[1, 2, 3], b=[4, 5, 6]))
     instance = startup("", data=df, ignore_duplicate=True)
 
-    resp = redirect(f"/flask/dtale/main/{instance._data_id}")
-    return resp
+    return redirect(f"/flask/dtale/main/{instance._data_id}")

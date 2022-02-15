@@ -9,9 +9,7 @@ def test_path_dispatcher():
     prefixes = ["foo", "bar"]
 
     def mock_peek_path_info(_base):
-        if len(prefixes):
-            return prefixes.pop(0)
-        return "bar"
+        return prefixes.pop(0) if len(prefixes) else "bar"
 
     with ExitStack() as stack:
         mock_peek = stack.enter_context(
