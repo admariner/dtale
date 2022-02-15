@@ -107,11 +107,10 @@ def get_str_arg(r, name, default=None):
     val = r.args.get(name)
     if val is None or val == "":
         return default
-    else:
-        try:
-            return str(val)
-        except BaseException:
-            return default
+    try:
+        return str(val)
+    except BaseException:
+        return default
 
 
 def get_json_arg(r, name, default=None):
@@ -144,11 +143,10 @@ def get_int_arg(r, name, default=None):
     val = r.args.get(name)
     if val is None or val == "":
         return default
-    else:
-        try:
-            return int(val)
-        except BaseException:
-            return default
+    try:
+        return int(val)
+    except BaseException:
+        return default
 
 
 def get_float_arg(r, name, default=None):
@@ -164,11 +162,10 @@ def get_float_arg(r, name, default=None):
     val = r.args.get(name)
     if val is None or val == "":
         return default
-    else:
-        try:
-            return float(val)
-        except BaseException:
-            return default
+    try:
+        return float(val)
+    except BaseException:
+        return default
 
 
 def get_bool_arg(r, name):
@@ -420,7 +417,9 @@ def classify_type(type_name):
         return "F"
     if lower_type_name.startswith("int"):
         return "I"
-    if any([t for t in ["timestamp", "datetime"] if lower_type_name.startswith(t)]):
+    if any(
+        t for t in ["timestamp", "datetime"] if lower_type_name.startswith(t)
+    ):
         return "D"
     if lower_type_name.startswith("timedelta"):
         return "TD"
@@ -437,11 +436,9 @@ def retrieve_grid_params(req, props=None):
     :return: dictionary of argument/value pairs
     :rtype: dict
     """
-    params = dict()
-    params["sort_column"] = get_str_arg(req, "sortColumn")
+    params = {'sort_column': get_str_arg(req, "sortColumn")}
     params["sort_direction"] = get_str_arg(req, "sortDirection")
-    sort = get_str_arg(req, "sort")
-    if sort:
+    if sort := get_str_arg(req, "sort"):
         params["sort"] = json.loads(sort)
     return params
 

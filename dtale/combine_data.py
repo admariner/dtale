@@ -62,9 +62,10 @@ class MergeBuilder(object):
         self.datasets = datasets
 
     def build_data(self):
-        dfs = []
-        for dataset in self.datasets:
-            dfs.append((build_df(dataset, is_merge=True), dataset["suffix"] or None))
+        dfs = [
+            (build_df(dataset, is_merge=True), dataset["suffix"] or None)
+            for dataset in self.datasets
+        ]
 
         how, indicator, sort = (
             self.config.get(prop) for prop in ["how", "indicator", "sort"]

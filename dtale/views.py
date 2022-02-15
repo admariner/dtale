@@ -810,9 +810,11 @@ def check_duplicate_data(data):
 def convert_xarray_to_dataset(dataset, **indexers):
     def _convert_zero_dim_dataset(dataset):
         ds_dict = dataset.to_dict()
-        data = {}
-        for coord, coord_data in ds_dict["coords"].items():
-            data[coord] = coord_data["data"]
+        data = {
+            coord: coord_data["data"]
+            for coord, coord_data in ds_dict["coords"].items()
+        }
+
         for col, col_data in ds_dict["data_vars"].items():
             data[col] = col_data["data"]
         return pd.DataFrame([data]).set_index(list(ds_dict["coords"].keys()))
@@ -834,9 +836,7 @@ def handle_koalas(data):
     :param data: data we want to check if its a koalas dataframe and if so convert to :class:`pandas:pandas.DataFrame`
     :return: :class:`pandas:pandas.DataFrame`
     """
-    if is_koalas(data):
-        return data.to_pandas()
-    return data
+    return data.to_pandas() if is_koalas(data) else data
 
 
 def is_koalas(data):
@@ -939,119 +939,120 @@ def startup(
     if data_loader is not None:
         data = data_loader()
 
-    if data is not None:
-        data = handle_koalas(data)
-        valid_types = (
-            pd.DataFrame,
-            pd.Series,
-            pd.DatetimeIndex,
-            pd.MultiIndex,
-            xr.Dataset,
-            np.ndarray,
-            list,
-            dict,
-        )
-        if not isinstance(data, valid_types):
-            raise Exception(
-                (
-                    "data loaded must be one of the following types: pandas.DataFrame, pandas.Series, "
-                    "pandas.DatetimeIndex, pandas.MultiIndex, xarray.Dataset, numpy.array, numpy.ndarray, list, dict"
-                )
-            )
-
-        if isinstance(data, xr.Dataset):
-            df = convert_xarray_to_dataset(data)
-            instance = startup(
-                url,
-                df,
-                name=name,
-                data_id=data_id,
-                context_vars=context_vars,
-                ignore_duplicate=ignore_duplicate,
-                allow_cell_edits=allow_cell_edits,
-                precision=precision,
-                show_columns=show_columns,
-                hide_columns=hide_columns,
-                column_formats=column_formats,
-                nan_display=nan_display,
-                sort=sort,
-                locked=locked,
-                background_mode=background_mode,
-                range_highlights=range_highlights,
-                app_root=app_root,
-                is_proxy=is_proxy,
-                vertical_headers=vertical_headers,
-            )
-
-            global_state.set_dataset(instance._data_id, data)
-            global_state.set_dataset_dim(instance._data_id, {})
-            return instance
-
-        data, curr_index = format_data(data, inplace=inplace, drop_index=drop_index)
-        # check to see if this dataframe has already been loaded to D-Tale
-        if data_id is None and not ignore_duplicate:
-            check_duplicate_data(data)
-
-        logger.debug(
-            "pytest: {}, flask-debug: {}".format(
-                running_with_pytest(), running_with_flask_debug()
-            )
-        )
-
-        if data_id is None:
-            data_id = global_state.new_data_inst()
-        if global_state.get_settings(data_id) is not None:
-            curr_settings = global_state.get_settings(data_id)
-            curr_locked = curr_settings.get("locked", [])
-            # filter out previous locked columns that don't exist
-            curr_locked = [c for c in curr_locked if c in data.columns]
-            # add any new columns in index
-            curr_locked += [c for c in curr_index if c not in curr_locked]
-        else:
-            logger.debug(
-                "pre-locking index columns ({}) to settings[{}]".format(
-                    curr_index, data_id
-                )
-            )
-            curr_locked = locked or curr_index
-            global_state.set_metadata(data_id, dict(start=pd.Timestamp("now")))
-        global_state.set_name(data_id, name)
-        # in the case that data has been updated we will drop any sorts or filter for ease of use
-        base_settings = dict(
-            locked=curr_locked,
-            allow_cell_edits=True if allow_cell_edits is None else allow_cell_edits,
-            precision=precision,
-            columnFormats=column_formats or {},
-            backgroundMode=background_mode,
-            rangeHighlight=range_highlights,
-            verticalHeaders=vertical_headers,
-        )
-        base_predefined = predefined_filters.init_filters()
-        if base_predefined:
-            base_settings["predefinedFilters"] = base_predefined
-        if sort:
-            base_settings["sortInfo"] = sort
-            data = sort_df_for_grid(data, dict(sort=sort))
-        if nan_display is not None:
-            base_settings["nanDisplay"] = nan_display
-        global_state.set_settings(data_id, base_settings)
-        if optimize_dataframe:
-            data = optimize_df(data)
-        global_state.set_data(data_id, data)
-        dtypes_state = build_dtypes_state(data, global_state.get_dtypes(data_id) or [])
-        if show_columns or hide_columns:
-            for col in dtypes_state:
-                if show_columns and col["name"] not in show_columns:
-                    col["visible"] = False
-                if hide_columns and col["name"] in hide_columns:
-                    col["visible"] = False
-        global_state.set_dtypes(data_id, dtypes_state)
-        global_state.set_context_variables(
-            data_id, build_context_variables(data_id, context_vars)
-        )
-        return DtaleData(data_id, url, is_proxy=is_proxy, app_root=app_root)
-    else:
+    if data is None:
         raise NoDataLoadedException("No data has been loaded into this D-Tale session!")
+    data = handle_koalas(data)
+    valid_types = (
+        pd.DataFrame,
+        pd.Series,
+        pd.DatetimeIndex,
+        pd.MultiIndex,
+        xr.Dataset,
+        np.ndarray,
+        list,
+        dict,
+    )
+    if not isinstance(data, valid_types):
+        raise Exception(
+            (
+                "data loaded must be one of the following types: pandas.DataFrame, pandas.Series, "
+                "pandas.DatetimeIndex, pandas.MultiIndex, xarray.Dataset, numpy.array, numpy.ndarray, list, dict"
+            )
+        )
+
+    if isinstance(data, xr.Dataset):
+        df = convert_xarray_to_dataset(data)
+        instance = startup(
+            url,
+            df,
+            name=name,
+            data_id=data_id,
+            context_vars=context_vars,
+            ignore_duplicate=ignore_duplicate,
+            allow_cell_edits=allow_cell_edits,
+            precision=precision,
+            show_columns=show_columns,
+            hide_columns=hide_columns,
+            column_formats=column_formats,
+            nan_display=nan_display,
+            sort=sort,
+            locked=locked,
+            background_mode=background_mode,
+            range_highlights=range_highlights,
+            app_root=app_root,
+            is_proxy=is_proxy,
+            vertical_headers=vertical_headers,
+        )
+
+        global_state.set_dataset(instance._data_id, data)
+        global_state.set_dataset_dim(instance._data_id, {})
+        return instance
+
+    data, curr_index = format_data(data, inplace=inplace, drop_index=drop_index)
+    # check to see if this dataframe has already been loaded to D-Tale
+    if data_id is None and not ignore_duplicate:
+        check_duplicate_data(data)
+
+    logger.debug(
+        "pytest: {}, flask-debug: {}".format(
+            running_with_pytest(), running_with_flask_debug()
+        )
+    )
+
+    if data_id is None:
+        data_id = global_state.new_data_inst()
+    if global_state.get_settings(data_id) is not None:
+        curr_settings = global_state.get_settings(data_id)
+        curr_locked = curr_settings.get("locked", [])
+        # filter out previous locked columns that don't exist
+        curr_locked = [c for c in curr_locked if c in data.columns]
+        # add any new columns in index
+        curr_locked += [c for c in curr_index if c not in curr_locked]
+    else:
+        logger.debug(
+            "pre-locking index columns ({}) to settings[{}]".format(
+                curr_index, data_id
+            )
+        )
+        curr_locked = locked or curr_index
+        global_state.set_metadata(data_id, dict(start=pd.Timestamp("now")))
+    global_state.set_name(data_id, name)
+    # in the case that data has been updated we will drop any sorts or filter for ease of use
+    base_settings = dict(
+        locked=curr_locked,
+        allow_cell_edits=True if allow_cell_edits is None else allow_cell_edits,
+        precision=precision,
+        columnFormats=column_formats or {},
+        backgroundMode=background_mode,
+        rangeHighlight=range_highlights,
+        verticalHeaders=vertical_headers,
+    )
+    if base_predefined := predefined_filters.init_filters():
+        base_settings["predefinedFilters"] = base_predefined
+    if sort:
+        base_settings["sortInfo"] = sort
+        data = sort_df_for_grid(data, dict(sort=sort))
+    if nan_display is not None:
+        base_settings["nanDisplay"] = nan_display
+    global_state.set_settings(data_id, base_settings)
+    if optimize_dataframe:
+        data = optimize_df(data)
+    global_state.set_data(data_id, data)
+    dtypes_state = build_dtypes_state(data, global_state.get_dtypes(data_id) or [])
+    for col in dtypes_state:
+        if show_columns:
+            if col["name"] not in show_columns:
+                col["visible"] = False
+            if hide_columns and col["name"] in hide_columns:
+                col["visible"] = False
+        elif hide_columns:
+            if col["name"] in hide_columns:
+                col["visible"] = False
+    global_state.set_dtypes(data_id, dtypes_state)
+    global_state.set_context_variables(
+        data_id, build_context_variables(data_id, context_vars)
+    )
+    return DtaleData(data_id, url, is_proxy=is_proxy, app_root=app_root)
 
 
 def base_render_template(template, data_id, **kwargs):
@@ -1095,8 +1096,7 @@ def _view_main(data_id, iframe=False):
     :return: HTML
     """
     title = "D-Tale"
-    name = global_state.get_name(data_id)
-    if name:
+    if name := global_state.get_name(data_id):
         title = "{} ({})".format(title, name)
     return base_render_template("dtale/main.html", data_id, title=title, iframe=iframe)
 
@@ -1726,8 +1726,7 @@ def build_replacement(data_id):
     def _build_data_ranges(data, col, dtype):
         data_ranges = {}
         if classify_type(dtype) == "F" and not data[col].isnull().all():
-            col_ranges = calc_data_ranges(data[[col]])
-            if col_ranges:
+            if col_ranges := calc_data_ranges(data[[col]]):
                 data_ranges[col] = col_ranges[col]
         return data_ranges
 

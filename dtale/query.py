@@ -20,8 +20,10 @@ def inner_build_query(settings, query=None):
     query_segs = []
     for p in ["columnFilters", "outlierFilters"]:
         curr_filters = settings.get(p) or {}
-        for col, filter_cfg in curr_filters.items():
-            query_segs.append(filter_cfg["query"])
+        query_segs.extend(
+            filter_cfg["query"] for col, filter_cfg in curr_filters.items()
+        )
+
     if query not in [None, ""]:
         query_segs.append(query)
     joined_query_segs = " and ".join(query_segs)

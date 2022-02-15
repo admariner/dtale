@@ -11,9 +11,7 @@ logger = getLogger(__name__)
 
 
 def validate_allow_cell_edits(ctx, param, value):
-    if "--no-cell-edits" in sys.argv:
-        return value
-    return None
+    return value if "--no-cell-edits" in sys.argv else None
 
 
 @click.command(name="main", help="Run D-Tale from command-line")

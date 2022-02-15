@@ -40,7 +40,7 @@ def test_merge(unittest):
     with app.test_client() as c:
         data = {"1": left, "2": right, "3": right2}
         dtypes = {k: build_dtypes_state(v) for k, v in data.items()}
-        settings = {k: {} for k in data.keys()}
+        settings = {k: {} for k in data}
         build_data_inst(data)
         build_dtypes(dtypes)
         build_settings(settings)
@@ -142,7 +142,7 @@ def test_stack(unittest):
     with app.test_client() as c:
         data = {"1": df1, "2": df2}
         dtypes = {k: build_dtypes_state(v) for k, v in data.items()}
-        settings = {k: {} for k in data.keys()}
+        settings = {k: {} for k in data}
         build_data_inst(data)
         build_dtypes(dtypes)
         build_settings(settings)

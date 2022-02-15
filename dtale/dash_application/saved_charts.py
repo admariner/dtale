@@ -77,24 +77,35 @@ def build_saved_header(config):
             map_props = ["map_type", "loc_mode", "loc", "map_val"]
             if config.get("loc_mode") == "geojson-id":
                 map_props += ["geojson", "featureidkey"]
-        for prop in map_props:
-            final_data.append((prop, config.get(prop)))
+        final_data.extend((prop, config.get(prop)) for prop in map_props)
     elif chart_type == "candlestick":
         group_by = config["cs_group"]
-        for prop in ["cs_x", "cs_open", "cs_close", "cs_high", "cs_low"]:
-            final_data.append((prop.split("_")[-1], config.get(prop)))
+        final_data.extend(
+            (prop.split("_")[-1], config.get(prop))
+            for prop in ["cs_x", "cs_open", "cs_close", "cs_high", "cs_low"]
+        )
+
     elif chart_type == "treemap":
         group_by = config["treemap_group"]
-        for prop in ["treemap_value", "treemap_label"]:
-            final_data.append((prop.split("_")[-1], config.get(prop)))
+        final_data.extend(
+            (prop.split("_")[-1], config.get(prop))
+            for prop in ["treemap_value", "treemap_label"]
+        )
+
     elif chart_type == "funnel":
         group_by = config["funnel_group"]
-        for prop in ["funnel_value", "funnel_label"]:
-            final_data.append((prop.split("_")[-1], config.get(prop)))
+        final_data.extend(
+            (prop.split("_")[-1], config.get(prop))
+            for prop in ["funnel_value", "funnel_label"]
+        )
+
     elif chart_type == "clustergram":
         group_by = config["clustergram_group"]
-        for prop in ["clustergram_value", "clustergram_label"]:
-            final_data.append((prop.split("_")[-1], config.get(prop)))
+        final_data.extend(
+            (prop.split("_")[-1], config.get(prop))
+            for prop in ["clustergram_value", "clustergram_label"]
+        )
+
     else:
         group_by = config.get("group")
         final_data.append(("X-Axis", config["x"]))

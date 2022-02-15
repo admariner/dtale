@@ -70,10 +70,10 @@ st.markdown(html, unsafe_allow_html=True)
 
 col1, col2 = st.beta_columns((1, 3))
 reload_columns = col1.button("Reload")
-columns = [c for c in curr_instance.data.columns]
+columns = list(curr_instance.data.columns)
 if reload_columns:
     curr_instance = get_instance("1")
-    columns = [c for c in curr_instance.data.columns]
+    columns = list(curr_instance.data.columns)
 selected_column = col2.radio("Column Analysis", columns)
 
 st.markdown(

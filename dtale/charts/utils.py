@@ -96,11 +96,10 @@ def valid_chart(chart_type=None, x=None, y=None, z=None, **inputs):
         if map_type == "choropleth" and all(
             inputs.get(p) is not None for p in ["loc_mode", "loc", "map_val"]
         ):
-            if inputs.get("loc_mode") == "geojson-id" and any(
-                inputs.get(p) is None for p in ["geojson", "featureidkey"]
-            ):
-                return False
-            return True
+            return inputs.get("loc_mode") != "geojson-id" or all(
+                inputs.get(p) is not None for p in ["geojson", "featureidkey"]
+            )
+
         elif map_type in ["scattergeo", "mapbox"] and all(
             inputs.get(p) is not None for p in ["lat", "lon"]
         ):
@@ -167,27 +166,26 @@ def date_freq_handler(df):
 
     def _handler(col_def):
         col_def_segs = col_def.split("|")
-        if len(col_def_segs) > 1 and classify_type(dtypes[col_def_segs[0]]) == "D":
-            col, freq = col_def_segs
-            if freq == "WD":
-                code = "df.set_index('{col}').index.dayofweek.values"
-                freq_grp = df.set_index(col).index.dayofweek.values
-            elif freq == "H2":
-                code = "df.set_index('{col}').index.hour.values"
-                freq_grp = df.set_index(col).index.hour.values
-            else:
-                code = "df.set_index('{col}').index.to_period('{freq}').to_timestamp(how='end').values"
-                freq_grp = (
-                    df.set_index(col)
-                    .index.to_period(freq)
-                    .to_timestamp(how="end")
-                    .values
-                )
-            code = "\tpd.Series(" + code + ", index=df.index, name='{col_def}'),"
-            freq_grp = pd.Series(freq_grp, index=orig_idx, name=col_def)
-            return freq_grp, code.format(col=col, freq=freq, col_def=col_def)
-        else:
+        if len(col_def_segs) <= 1 or classify_type(dtypes[col_def_segs[0]]) != "D":
             return df[col_def], "\tdf['{col_def}'],".format(col_def=col_def)
+        col, freq = col_def_segs
+        if freq == "WD":
+            code = "df.set_index('{col}').index.dayofweek.values"
+            freq_grp = df.set_index(col).index.dayofweek.values
+        elif freq == "H2":
+            code = "df.set_index('{col}').index.hour.values"
+            freq_grp = df.set_index(col).index.hour.values
+        else:
+            code = "df.set_index('{col}').index.to_period('{freq}').to_timestamp(how='end').values"
+            freq_grp = (
+                df.set_index(col)
+                .index.to_period(freq)
+                .to_timestamp(how="end")
+                .values
+            )
+        code = "\tpd.Series(" + code + ", index=df.index, name='{col_def}'),"
+        freq_grp = pd.Series(freq_grp, index=orig_idx, name=col_def)
+        return freq_grp, code.format(col=col, freq=freq, col_def=col_def)
 
     return _handler
 
@@ -471,11 +469,10 @@ def build_agg_data(
     if is_agg and agg == "raw":
         return df, [], agg_cols
 
-    if is_agg and agg == "corr":
-        if not z_exists:
-            raise NotImplementedError(
-                "Correlation aggregation is only available for 3-dimensional charts!"
-            )
+    if is_agg and agg == "corr" and not z_exists:
+        raise NotImplementedError(
+            "Correlation aggregation is only available for 3-dimensional charts!"
+        )
     if is_agg and agg == "rolling":
         if z_exists:
             raise NotImplementedError(
@@ -970,10 +967,9 @@ def build_base_chart(
     return ret_data, code
 
 
-WEEKDAY_MAP = {
-    idx: day
-    for idx, day in enumerate(["Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun"])
-}
+WEEKDAY_MAP = dict(
+    enumerate(["Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun"])
+)
 
 
 def weekday_tick_handler(col_data, col):

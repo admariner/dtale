@@ -237,10 +237,7 @@ def test_json_string2(builtin_pkg):
 
     class MockStr(object):
         def __init__(self, string=""):
-            if PY3:
-                raise UnicodeEncodeError("", "", 0, 0, "")
-            else:
-                raise UnicodeEncodeError("", u"", 0, 0, "")
+            raise UnicodeEncodeError("", "", 0, 0, "")
 
     class TestStr(object):
         def encode(self, encoding=None, errors=None):

@@ -23,7 +23,7 @@ def load_content(url):
         try:
             resp = requests.get(url)
         except:
-            tries = tries + 1
+            tries += 1
             logger.debug("failed to load %s, retry %d", url, tries)
     content = resp.text
     return BeautifulSoup(content, features="lxml")

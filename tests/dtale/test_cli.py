@@ -318,7 +318,6 @@ def test_artic_loader(builtin_pkg):
 
             def __init__(self):
                 self.data = node
-                pass
 
         def import_mock(name, *args, **kwargs):
             if name == "arctic":
@@ -437,7 +436,6 @@ def test_arctic_version_data(builtin_pkg):
 
         def __init__(self):
             self.data = "versioned_data"
-            pass
 
     class MockArcticLibrary(object):
         def __init__(self, *args, **kwargs):

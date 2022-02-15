@@ -20,9 +20,7 @@ def test_initialize_process_props():
     ups = [True, True, False]
 
     def mock_is_up(_base):
-        if len(ups):
-            return ups.pop(0)
-        return True
+        return ups.pop(0) if len(ups) else True
 
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.app.is_up", mock_is_up))
@@ -569,7 +567,7 @@ def test_show_jupyter_server_proxy(unittest):
 
         instance2 = get_instance(instance._data_id)
         # this is a known bug where get_instance will not work if you've specified an `app_root' in show()
-        assert not instance2._url == instance._url
+        assert instance2._url != instance._url
         instances()
         instance.kill()
         mock_requests.assert_called_once()
@@ -703,7 +701,7 @@ def test_show_columns():
             data=df, ignore_duplicate=True, show_columns=["a"], subprocess=False
         )
         assert global_state.get_dtypes(instance._data_id)[0]["visible"] is True
-        assert not global_state.get_dtypes(instance._data_id)[1]["visible"] is True
+        assert global_state.get_dtypes(instance._data_id)[1]["visible"] is not True
 
 
 @pytest.mark.unit
@@ -730,4 +728,4 @@ def test_hide_columns():
             data=df, ignore_duplicate=True, hide_columns=["b"], subprocess=False
         )
         assert global_state.get_dtypes(instance._data_id)[0]["visible"] is True
-        assert not global_state.get_dtypes(instance._data_id)[1]["visible"] is True
+        assert global_state.get_dtypes(instance._data_id)[1]["visible"] is not True

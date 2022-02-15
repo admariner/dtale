@@ -198,11 +198,11 @@ def test_started_with_open_browser():
         instance = DtaleData(9999, "user/root/proxy/9999")
         instance.started_with_open_browser = True
         assert instance.__str__() == ""
-        assert instance.started_with_open_browser is False
+        assert not instance.started_with_open_browser
 
         instance.started_with_open_browser = True
         assert instance.__repr__() == ""
-        assert instance.started_with_open_browser is False
+        assert not instance.started_with_open_browser
 
 
 @pytest.mark.unit

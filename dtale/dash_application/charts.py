@@ -87,13 +87,12 @@ def get_url_parser():
     """
     if PY3:
         return urllib.parse.parse_qsl
-    else:
-        try:
-            return urllib.parse_qsl
-        except BaseException:
-            from urlparse import parse_qsl
+    try:
+        return urllib.parse_qsl
+    except BaseException:
+        from urlparse import parse_qsl
 
-            return parse_qsl
+        return parse_qsl
 
 
 def parse_group_filter(group_filter):
@@ -143,10 +142,10 @@ def chart_url_params(search):
                 "could not parse colorscale, removing it for backwards compatibility purposes"
             )
             del params["colorscale"]
-    params["cpg"] = "true" == params.get("cpg")
-    params["cpy"] = "true" == params.get("cpy")
+    params["cpg"] = params.get("cpg") == "true"
+    params["cpy"] = params.get("cpy") == "true"
     if params.get("chart_type") in ANIMATION_CHARTS:
-        params["animate"] = "true" == params.get("animate")
+        params["animate"] = params.get("animate") == "true"
     for int_prop in ["window", "load", "top_bars"]:
         if int_prop in params:
             params[int_prop] = int(params[int_prop])
@@ -262,7 +261,10 @@ def chart_url_querystring(params, data=None, group_filter=None):
         for y, range in (params.get("yaxis") or {}).items():
             if y not in ((data or {}).get("min") or {}):
                 continue
-            if not (range["min"], range["max"]) == (data["min"][y], data["max"][y]):
+            if (range["min"], range["max"]) != (
+                data["min"][y],
+                data["max"][y],
+            ):
                 params_yaxis[y] = range
         if len(params_yaxis):
             final_params["yaxis"] = json.dumps(params_yaxis)
@@ -287,7 +289,7 @@ def build_colorscale(colorscale):
 def is_bool_axis(data_id, col):
     col_no_agg = col
     for agg in AGGS:
-        if col.endswith("|{}".format(agg)):
+        if col_no_agg.endswith("|{}".format(agg)):
             return False
 
     orig_dtype = (global_state.get_dtype_info(data_id, col_no_agg) or {}).get("dtype")
@@ -331,10 +333,8 @@ def build_axes(
         axes = {"xaxis": dict(title=update_label_for_freq_and_agg(x))}
         has_multiaxis = False
         positions = []
-        if axis_type == "multi":  # take the default behavior for plotly
+        if axis_type == "multi":
             for i, y2 in enumerate(y, 0):
-                right = i % 2 == 1
-                axis_ct = int(i / 2)
                 value = dict(title=update_label_for_freq_and_agg(y2), type=scale)
 
                 if i == 0:
@@ -342,9 +342,11 @@ def build_axes(
                 else:
                     has_multiaxis = True
                     key = "yaxis{}".format(i + 1)
+                    right = i % 2 == 1
                     value = dict_merge(
                         value, dict(overlaying="y", side="right" if right else "left")
                     )
+                    axis_ct = int(i / 2)
                     value["anchor"] = "free" if axis_ct > 0 else "x"
                     if axis_ct > 0:
                         pos = axis_ct / 20.0
@@ -352,11 +354,11 @@ def build_axes(
                         positions.append(value["position"])
                 if (
                     y2 in axis_data
-                    and not (
+                    and (
                         axis_data[y2]["min"],
                         axis_data[y2]["max"],
                     )
-                    == (mins[y2], maxs[y2])
+                    != (mins[y2], maxs[y2])
                 ):
                     value["range"] = [axis_data[y2]["min"], axis_data[y2]["max"]]
                 if classify_type(dtypes.get(y2)) == "I":
@@ -1337,9 +1339,7 @@ def bar_builder(
                         axes.get("xaxis", {}),
                         build_spaced_ticks(df["x"].values, mode="array"),
                     )
-                for i, y2 in enumerate(final_cols, 1):
-                    data.append(
-                        dict_merge(
+                data.extend(dict_merge(
                             {
                                 k: v
                                 for k, v in series.items()
@@ -1354,8 +1354,7 @@ def bar_builder(
                             {}
                             if i == 1 or not allow_multiaxis
                             else {"yaxis": "y{}".format(i)},
-                        )
-                    )
+                        ) for i, y2 in enumerate(final_cols, 1))
                 if barmode == "group" and allow_multiaxis:
                     data["data"] = list(
                         build_grouped_bars_with_multi_yaxis(data["data"], final_cols)
@@ -1759,10 +1758,11 @@ def pie_builder(data, x, y, wrapper, export=False, **inputs):
     def build_pies():
         for series_key, series in data["data"].items():
             for y2 in final_cols:
-                negative_values = []
-                for x_val, y_val in zip(series["x"], series[y2]):
-                    if y_val < 0:
-                        negative_values.append("{} ({})".format(x_val, y_val))
+                negative_values = [
+                    "{} ({})".format(x_val, y_val)
+                    for x_val, y_val in zip(series["x"], series[y2])
+                    if y_val < 0
+                ]
 
                 layout = build_layout(build_title(x, y2, group=series_key))
                 layout = build_pie_layout(layout, series)
@@ -2413,7 +2413,6 @@ def funnel_builder(data_id, export=False, **inputs):
         series_key = next(iter(data["data"]), None)
         series = data["data"].get(series_key)
         title = build_title(selected_label, final_cols[0])
-        funnel_code = []
         if len(data["data"]) > 1 and not is_stacked:
             code.append(
                 GROUP_WARNING.format(series_key=triple_quote(series.get("_filter_")))
@@ -2423,11 +2422,12 @@ def funnel_builder(data_id, export=False, **inputs):
             title = build_title(selected_label, final_cols)
             title["title"]["text"] += " stacked by {}".format(", ".join(group))
 
-        funnel_code.append(
+        funnel_code = [
             "chart_data = chart_data[chart_data['{}'] > 0]  # can't represent negatives in a funnel".format(
                 final_cols[0]
             )
-        )
+        ]
+
         layout_cfg = build_layout(title)
         pp = pprint.PrettyPrinter(indent=4)
         layout = pp.pformat(layout_cfg)
@@ -2462,10 +2462,11 @@ def funnel_builder(data_id, export=False, **inputs):
         stacked_data = []
         for series_key, series in data["data"].items():
             for y2 in final_cols:
-                negative_values = []
-                for x_val, y_val in zip(series["x"], series[y2]):
-                    if y_val < 0:
-                        negative_values.append("{} ({})".format(x_val, y_val))
+                negative_values = [
+                    "{} ({})".format(x_val, y_val)
+                    for x_val, y_val in zip(series["x"], series[y2])
+                    if y_val < 0
+                ]
 
                 series_df = pd.DataFrame({"x": series["x"], y2: series[y2]})
                 if (
@@ -2619,7 +2620,6 @@ def clustergram_builder(data_id, export=False, **inputs):
         series_key = next(iter(data["data"]), None)
         series = data["data"].get(series_key)
         title = build_title(selected_label, final_cols[0])["title"]["text"]
-        clustergram_code = []
         if len(data["data"]) > 1:
             code.append(
                 GROUP_WARNING.format(series_key=triple_quote(series.get("_filter_")))
@@ -2632,9 +2632,7 @@ def clustergram_builder(data_id, export=False, **inputs):
         color_map = pp.format(build_colorscale(colorscale)) if colorscale else ""
         if color_map:
             color_map = "\t\tcolor_map={color_map},\n".format(color_map=color_map)
-        clustergram_code.append("\nfrom dash_bio import Clustergram\n")
-        clustergram_code.append(
-            (
+        return list(("\nfrom dash_bio import Clustergram\n", (
                 "charts = []\n"
                 "chart_data = chart_data[chart_data[['{value}']] > 0]\n"
                 "for group_key, group in chart_data.groupby(['{group}']):\n"
@@ -2656,11 +2654,7 @@ def clustergram_builder(data_id, export=False, **inputs):
                 color_map=color_map,
                 color_threshold="{'row': 250, 'col': 700}",
                 title="{'text': '" + title + "'}",
-            )
-        )
-        chart_val = "charts"
-        clustergram_code.append("figure = go.Figure(data={})".format(chart_val))
-        return clustergram_code
+            ), "figure = go.Figure(data={})".format("charts")))
 
     # run this before we pop off group filters
     code += build_clustergram_code()
@@ -2741,15 +2735,17 @@ def pareto_builder(data_id, export=False, **inputs):
         series_key = next(iter(data["data"]), None)
         series = data["data"].get(series_key)
         title = build_title(x, final_cols[0])["title"]["text"]
-        pareto_code = []
         if len(data["data"]) > 1:
             code.append(
                 GROUP_WARNING.format(series_key=triple_quote(series.get("_filter_")))
             )
             title = build_title(x, [line, bars], group=series_key)["title"]["text"]
 
-        pareto_code.append("\nimport plotly.graph_objs as go")
-        pareto_code.append("from plotly.subplots import make_subplots\n")
+        pareto_code = [
+            '\nimport plotly.graph_objs as go',
+            'from plotly.subplots import make_subplots\n',
+        ]
+
         code_kwargs = dict(
             bars=bars,
             line=line,

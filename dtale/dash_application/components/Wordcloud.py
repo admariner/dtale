@@ -40,5 +40,5 @@ class Wordcloud(Component):
 
         for k in ["id"]:
             if k not in args:
-                raise TypeError("Required argument `" + k + "` was not specified.")
+                raise TypeError(f'Required argument `{k}` was not specified.')
         super(Wordcloud, self).__init__(**args)

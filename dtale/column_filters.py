@@ -47,9 +47,7 @@ class OutlierFilter(object):
         self.cfg = cfg
 
     def build_filter(self):
-        if self.cfg.get("query") is None:
-            return None
-        return self.cfg
+        return None if self.cfg.get("query") is None else self.cfg
 
 
 class MissingFilter(object):
@@ -68,9 +66,7 @@ class MissingFilter(object):
 
 
 def handle_ne(query, operand):
-    if operand != "=":
-        return "~({})".format(query)
-    return query
+    return "~({})".format(query) if operand != "=" else query
 
 
 class StringFilter(MissingFilter):

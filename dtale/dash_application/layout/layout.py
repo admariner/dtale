@@ -88,10 +88,7 @@ def base_layout(app_root, **kwargs):
     grid_links = []
     for id in global_state.keys():
         label = global_state.get_name(id)
-        if label:
-            label = " ({})".format(label)
-        else:
-            label = ""
+        label = " ({})".format(label) if label else ""
         grid_links.append(
             (
                 """<a href="../main/{id}" class="dropdown-item data-grid-link" target="{target}">"""

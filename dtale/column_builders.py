@@ -385,7 +385,7 @@ class RandomColumnBuilder(object):
 
     def build_code(self):
         rand_type = self.cfg["type"]
-        if "string" == rand_type:
+        if rand_type == "string":
             kwargs = []
             if self.cfg.get("length") != 10:
                 kwargs.append("size={size}".format(size=self.cfg.get("length")))
@@ -398,21 +398,16 @@ class RandomColumnBuilder(object):
                 "\treturn ''.join(random.choice(chars) for _ in range(size))\n\n"
                 "df.loc[:, '{name}'] = pd.Series([id_generator({kwargs}) for _ in range(len(df)], index=df.index)"
             ).format(kwargs=kwargs, name=self.name)
-            return "df.loc[:, '{name}'] = df['{col}'].dt.{property}".format(
-                name=self.name, **self.cfg
-            )
-
-        if "bool" == rand_type:
+        if rand_type == "bool":
             return (
                 "df.loc[:, '{name}'] = pd.Series(np.random.choice([True, False], len(df)), index=data.index"
             ).format(name=self.name)
-        if "date" == rand_type:
+        if rand_type == "date":
             start = pd.Timestamp(self.cfg.get("start") or "19000101")
             end = pd.Timestamp(self.cfg.get("end") or "21991231")
             business_days = self.cfg.get("businessDay") is True
-            timestamps = self.cfg.get("timestamps") is True
-            if timestamps:
-                code = (
+            if timestamps := self.cfg.get("timestamps") is True:
+                return (
                     "def pp(start, end, n):\n"
                     "\tstart_u = start.value // 10 ** 9\n"
                     "\tend_u = end.value // 10 ** 9\n"
@@ -427,20 +422,20 @@ class RandomColumnBuilder(object):
                     start=start.strftime("%Y%m%d"),
                     end=end.strftime("%Y%m%d"),
                 )
-            else:
-                freq = ", freq='B'" if business_days else ""
-                code = (
-                    "dates = pd.date_range('{start}', '{end}'{freq})\n"
-                    "dates = [dates[i] for i in np.random.randint(0, len(dates) - 1, size=len(data))]\n"
-                    "df.loc[:, '{name}'] = pd.Series(dates, index=data.index)"
-                ).format(
-                    name=self.name,
-                    start=start.strftime("%Y%m%d"),
-                    end=end.strftime("%Y%m%d"),
-                    freq=freq,
-                )
-            return code
-        if "choice" == rand_type:
+
+            freq = ", freq='B'" if business_days else ""
+            return (
+                "dates = pd.date_range('{start}', '{end}'{freq})\n"
+                "dates = [dates[i] for i in np.random.randint(0, len(dates) - 1, size=len(data))]\n"
+                "df.loc[:, '{name}'] = pd.Series(dates, index=data.index)"
+            ).format(
+                name=self.name,
+                start=start.strftime("%Y%m%d"),
+                end=end.strftime("%Y%m%d"),
+                freq=freq,
+            )
+
+        if rand_type == "choice":
             choices = (
                 self.cfg.get("choices")
                 or "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z"
@@ -450,7 +445,7 @@ class RandomColumnBuilder(object):
                 choices="', '".join(choices), name=self.name
             )
 
-        if "int" == rand_type:
+        if rand_type == "int":
             low = self.cfg.get("low", 0)
             high = self.cfg.get("high", 100)
             return (
@@ -1091,9 +1086,7 @@ def clean(s, cleaner, cfg):
             def _load():
                 val_segs = val.split(" ")
                 for i, v2 in enumerate(val_segs):
-                    if i == 0:
-                        yield v2
-                    elif val_segs[i - 1] != v2:
+                    if i == 0 or val_segs[i - 1] != v2:
                         yield v2
 
             return " ".join(list(_load()))
@@ -1106,9 +1099,7 @@ def clean(s, cleaner, cfg):
         def drop_repeats(val):
             def _load():
                 for i, v2 in enumerate(val):
-                    if i == 0:
-                        yield v2
-                    elif val[i - 1] != v2:
+                    if i == 0 or val[i - 1] != v2:
                         yield v2
 
             return "".join(list(_load()))
@@ -1322,9 +1313,12 @@ class RollingBuilder(object):
             )
         if rolling_kwargs.get("center"):
             rolling_kwargs_str.append("center=True")
-        for p in ["win_type", "on", "closed"]:
-            if rolling_kwargs.get(p):
-                rolling_kwargs_str.append("{}='{}'".format(p, rolling_kwargs[p]))
+        rolling_kwargs_str.extend(
+            "{}='{}'".format(p, rolling_kwargs[p])
+            for p in ["win_type", "on", "closed"]
+            if rolling_kwargs.get(p)
+        )
+
         rolling_kwargs_str = ", ".join(rolling_kwargs_str)
         if rolling_kwargs.get("on"):
             code = [
@@ -1363,8 +1357,10 @@ class ExponentialSmoothingBuilder(object):
         alpha = float(alpha)
         s = data[col].values
         result = [s[0]]
-        for n in range(1, len(s)):
-            result.append(alpha * s[n] + (1 - alpha) * result[n - 1])
+        result.extend(
+            alpha * s[n] + (1 - alpha) * result[n - 1] for n in range(1, len(s))
+        )
+
         return pd.Series(result, index=data.index, name=self.name)
 
     def build_code(self):
@@ -1389,19 +1385,15 @@ class CumsumColumnBuilder(object):
 
     def build_column(self, data):
         col = self.cfg.get("col")
-        group = self.cfg.get("group")
-        if group:
-            s = data.groupby(group)[col]
-        else:
-            s = data[col]
+        s = data.groupby(group)[col] if (group := self.cfg.get("group")) else data[col]
         return pd.Series(s.cumsum(axis=0), index=data.index, name=self.name)
 
     def build_code(self):
         col = self.cfg.get("col")
-        group = self.cfg.get("group")
-        group_code = ""
-        if group:
+        if group := self.cfg.get("group"):
             group_code = ".groupby(['{}'])".format("','".join(group))
+        else:
+            group_code = ""
         return (
             "df.loc[:, '{name}'] = pd.Series(\n"
             "\t(data{group}['{col}'].cumsum(axis=0), index=data.index, name='{name}'\n"

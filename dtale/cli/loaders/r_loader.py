@@ -37,8 +37,7 @@ def loader_func(**kwargs):
     base.load(path)
     with localconverter(ro.default_converter + pandas2ri.converter):
         dataset = kwargs.pop("dataset", None) or base.ls()[0]
-        df = ro.conversion.rpy2py(base.get(dataset))
-        return df
+        return ro.conversion.rpy2py(base.get(dataset))
 
 
 # IMPORTANT!!! This function is required for building any customized CLI loader.
