@@ -211,9 +211,9 @@ class DtaleData(object):
         self.is_proxy = is_proxy
         self.app_root = app_root
 
-    def build_main_url(self):
+    def build_main_url(self, name=None):
         return "{}/dtale/main/{}".format(
-            self.app_root if self.is_proxy else self._url, self._data_id
+            self.app_root if self.is_proxy else self._url, name or self._data_id
         )
 
     @property
